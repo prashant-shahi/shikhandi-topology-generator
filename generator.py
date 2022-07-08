@@ -1,68 +1,126 @@
-import argparse, json, uuid
-from random import randrange
+import argparse
+import json
+import uuid
+from random import randrange, sample
 
 import constant
 
 def argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s",'--service-count', type=int, required=True)
-    parser.add_argument("-i",'--max-instance-count', type=int, default=3)
-    parser.add_argument("-r",'--max-route-count', type=int, default=3)
-    parser.add_argument("-a",'--max-attributesets-count', type=int, default=3)
-    parser.add_argument("-e",'--max-eventsets-count', type=int, default=3)
+    parser.add_argument("-s", '--service-count', type=int, required=True, help="Total number of services")
+    parser.add_argument("-i", '--max-instance-count', type=int, default=3, help="Maximum number of instances")
+    parser.add_argument("-r", '--max-route-count', type=int, default=3, help="Maximum number of routes")
+    parser.add_argument("-a", '--max-attributesets-count', type=int, default=3, help="Maximum number of instance")
+    parser.add_argument("-o", '--output-topology', type=str, default="topology.json", help="File to write the generated topology JSON")
     args = parser.parse_args()
     return vars(args)
+
 
 def uuid4():
     return str(uuid.uuid4())
 
-def writeToFile(content, filename="topology.json"):
+
+def write_to_file(content, filename):
     with open(filename, "w") as file:
         file.write(content)
 
-def generateDownstreamCalls(routes):
-    print(len(routes))
 
-def generate(config):
+def generate_downstream_calls(services, service_index, route_index):
+    downstream_count = randrange(0,3)
+    downstream_call_count = sample(range(0, config["service_count"]), downstream_count)
+    downstream_calls = {}
+    routes = services[service_index]['routes'][route_index]
+    for i in downstream_call_count:
+        routes = services[i]['routes']
+        for j in range(0, randrange(0, 3)):
+            # services[i]: routes[randrange(0, len(routes))]
+            downstream_calls[services[i]["serviceName"]]=routes[randrange(len(routes))]["route"]
+    return downstream_calls
+
+
+def generate():
     sc = config["service_count"]
     mic = config["max_instance_count"]
     mrc = config["max_route_count"]
-    mra = config["max_attributesets_count"]
-    mec = config["max_eventsets_count"]
+    ot = config["output_topology"]
+    regions_count = len(constant.REGIONS)
+    attrsets_count = len(constant.ATTRIBUTE_SETS)
+
     services = []
-    serviceRoutes = {}
     for i in range(0, sc):
         instances = []
-        for j in range(0,mic):
+        for j in range(0, mic):
             instances.append(f'service-{i+1}-instance-{j+1}-{uuid4()}')
-        attribute_sets = []
-        for j in range(0,randrange(mra)+1):
-            attribute_sets.append(constant.ATTRIBUTE_SETS[randrange(len(constant.ATTRIBUTE_SETS))])
         routes = []
-        for j in range(0,randrange(mrc)+1):
-            routes.append({
-                "route": "",
-                "maxLatencyMillis": randrange(50,1000)
-            })
-        serviceName = f'service-{i+1}-{uuid4()}'
-        serviceRoutes.serviceName=routes.route
+        if i == 0:
+            for j in range(0, mrc):
+                route_name = f'/service-{i+1}-route-{j+1}-{uuid4()}'
+                routes.append({
+                    "route": route_name,
+                    "maxLatencyMillis": randrange(1, 9)*100
+                })
+        else:
+            for j in range(0, randrange(1, mrc)):
+                route_name = f'/service-{i+1}-route-{j+1}-{uuid4()}'
+                routes.append({
+                    "route": route_name,
+                    "maxLatencyMillis": randrange(1, 9)*100
+                })
+        attribute_sets = [
+            {
+                "weight": randrange(1,100),
+                "version": f'v{randrange(1,100)}',
+            },
+            {
+                "weight": randrange(1,100),
+                "region": constant.REGIONS[randrange(0,regions_count)],
+            },
+        ]
+        attribute_sets.append(constant.ATTRIBUTE_SETS[randrange(0,attrsets_count)])
+        service_name= f'service-{i+1}-{uuid4()}'
         services.append({
-                "serviceName": serviceName,
-                "instances": instances,
-                "attributeSets": attribute_sets,
-                "spanKind": "server", # TODO: change it to client/internal after signoz supports it
-                "routes": routes
-            })
-        if i == 0: services[i]['eventSets'] = constant.EVENT_SETS
-            
-    writeToFile(json.dumps({"topology":{"services":services}}), "topology-test.json")
+            "serviceName": service_name,
+            "instances": instances,
+            "attributeSets": attribute_sets,
+            # TODO: change it to client/internal after the support
+            "spanKind": "server",
+            "routes": routes
+        })
+
+        if i == 0: services[i]['eventSets']= constant.EVENT_SETS
+
+    for i in range(0, sc):
+        routes_count = len(services[i]['routes'])
+        for j in range(0, routes_count):
+            services[i]['routes'][j]['downstreamCalls'] = generate_downstream_calls(services, i, j)
+
+    root_routes = []
+    initial_service_name = services[0]['serviceName']
+    for route in services[0]['routes']:
+        root_routes.append({
+            "service": initial_service_name,
+            "route": route['route'],
+            "tracesPerHour": randrange(1, 150)*1000,
+        })
+    file_content = {
+        "topology":{
+            "services":services
+        },
+        "rootRoutes": root_routes
+    }
+    write_to_file(json.dumps(file_content), ot)
+    print('*'*3,"DONE",'*'*3)
+
 
 def main():
+    global config
     config = argument_parser()
-    if config["service_count"] < 1:
-        print("service count passed should be more than one")
+    if config["service_count"] < 3:
+        print("service count passed should be more than two")
         exit()
-    generate(config)
+
+    generate()
+
 
 if __name__ == '__main__':
     main()

@@ -1,18 +1,6 @@
 ATTRIBUTE_SETS = [
     {},
     {
-        "version": "v127",
-        "region": "us-east-1"
-    },
-    {
-        "version": "v125",
-        "region": "us-east-1"
-    },
-    {
-        "version": "v125",
-        "region": "us-west-1"
-    },
-    {
         "starter": "charmander"
     },
     {
@@ -22,36 +10,13 @@ ATTRIBUTE_SETS = [
         "starter": "bulbasaur"
     },
     {
-        "version": "v52"
+        "error": True,
+        "http.status_code": 503
     },
     {
         "error": True,
         "http.status_code": 503
     },
-    {
-        "version": "v234",
-        "region": "us-east-1"
-    },
-    {
-        "version": "v5",
-        "region": "us-east-1"
-    },
-    {
-        "version": "v37",
-        "region": "us-east-1"
-    },
-    {
-        "error": True,
-        "http.status_code": 503
-    },
-    {
-        "version": "v177",
-        "region": "us-east-1"
-    },
-    {
-        "version": "v27",
-        "region": "us-east-1"
-    }
 ]
 
 EVENT_SETS = [
@@ -67,4 +32,13 @@ EVENT_SETS = [
             "page": "home"
         }
     }
+]
+
+REGIONS = [
+    "us-east",
+    "us-west",
+    "eu-west",
+    "eu-central",
+    "eu-north",
+    "eu-south",
 ]
