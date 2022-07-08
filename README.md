@@ -1,6 +1,6 @@
 # Shikhandi Topology Generator
 
-This project is a topology JSON generator for [Shikandi](https://github.com/srikanthccv/shikhandi),
+This project is a topology JSON generator for [Shikhandi](https://github.com/srikanthccv/shikhandi),
 light weight load generator for OpenTelemetry.
 
 ## Usage
@@ -29,8 +29,8 @@ When running the generator script, `service-count` is mandatory, which
 dictates how many services to generate.
 
 The generator assumes that all services form a binary tree such that there are no
-many random downstream calls or cyclic traversals. When creating downstream calls,
-we traverse from from a node to its descendants service nodes.
+cyclic traversals or many random downstream calls. When creating downstream calls,
+from any node we traverse to its descendants service nodes randomly.
 
 ```mermaid
 graph TD;
@@ -68,3 +68,10 @@ To generate topology JSON with 3 services and print to console:
 ```bash
 python generator.py -s 10 --console
 ```
+
+# License
+
+MIT License
+
+Copyright (c) 2022 Prashant Shahi
+
