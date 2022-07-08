@@ -50,6 +50,8 @@ For each of the services, we randomly generate the following:
 - 1 random attribute set
 - event sets for the first service
 
+_*Note: Feel free to modify the `constants.py` according to your need to generate from custom set of attribute sets and event sets.._
+
 ## Examples
 
 To generate topology JSON with 5 services:
